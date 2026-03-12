@@ -1,5 +1,8 @@
 FROM node:20-alpine
 
+# Fix Prisma + OpenSSL on Alpine
+RUN apk add --no-cache openssl libc6-compat
+
 WORKDIR /app
 
 # Install deps
@@ -12,7 +15,7 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Create DB directory and run migrations + seed
+# Create DB directory
 RUN mkdir -p /app/prisma
 
 EXPOSE 3001
