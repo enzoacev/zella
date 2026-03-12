@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+
+  # ── Backend API (Node.js + Express + SQLite) ──────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: zella-api
+    ports:
+      - "3001:3001"
+    volumes:
+      - db_data:/app/prisma
+    environment:
+      DATABASE_URL: "file:/app/prisma/prod.db"
+      JWT_SECRET:   "${JWT_SECRET:-zella_change_me_in_production}"
+      NODE_ENV:     "production"
+      CORS_ORIGIN:  "http://localhost"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Frontend (Vite build → nginx) ─────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+      args:
+        VITE_API_URL: "/api"
+    container_name: zella-web
+    ports:
+      - "80:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db_data:

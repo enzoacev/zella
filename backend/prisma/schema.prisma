@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Merchant {
+  id       String  @id @default(cuid())
+  email    String  @unique
+  password String
+  name     String
+  category String  @default("")
+  address  String  @default("")
+  phone    String  @default("")
+  planId   String  @default("basic")
+  active   Boolean @default(true)
+  joinDate String  @default("")
+
+  // Branding
+  brandPrimary   String @default("#E85D26")
+  brandSecondary String @default("#2D6A4F")
+  stampIcon      String @default("⭐")
+  logoText       String @default("")
+
+  // Rules
+  stampsGoal     Int    @default(10)
+  rewardName     String @default("Premio")
+  couponValidity Int    @default(30)
+
+  cards        Card[]
+  coupons      Coupon[]
+  transactions Transaction[]
+  billing      Billing[]
+}
+
+model Customer {
+  id        String  @id @default(cuid())
+  dni       String  @unique
+  name      String
+  email     String  @default("")
+  pin       String
+  birthDate String  @default("")
+  joinDate  String  @default("")
+
+  cards        Card[]
+  coupons      Coupon[]
+  transactions Transaction[]
+}
+
+model Card {
+  id          String @id @default(cuid())
+  merchantId  String
+  customerId  String
+  stamps      Int    @default(0)
+  totalStamps Int    @default(0)
+  createdAt   String @default("")
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, customerId])
+}
+
+model Coupon {
+  id         String  @id @default(cuid())
+  merchantId String
+  customerId String
+  status     String  @default("pending")
+  rewardName String
+  type       String  @default("stamp")
+  createdAt  String  @default("")
+  expiresAt  String  @default("")
+  redeemedAt String  @default("")
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id         String @id @default(cuid())
+  merchantId String
+  customerId String
+  type       String
+  count      Int    @default(1)
+  createdAt  String @default("")
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Billing {
+  id         String @id @default(cuid())
+  merchantId String
+  plan       String
+  amount     Float
+  status     String @default("paid")
+  createdAt  String @default("")
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+}
+
+model GlobalBrand {
+  id       String @id @default("global")
+  name     String @default("ZELLA")
+  subtitle String @default("Loyalty Platform")
+  primary  String @default("#E85D26")
+  secondary String @default("#2D6A4F")
+}
+
+model Admin {
+  id       String @id @default(cuid())
+  email    String @unique
+  password String
+}
